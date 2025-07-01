@@ -23,6 +23,78 @@ const sortByOrder = (items) => {
   });
 };
 
+// Helper function to sanitize HTML content
+const sanitizeHTML = (html) => {
+  if (!html || typeof html !== 'string') return html;
+  
+  // Whitelist of allowed HTML tags
+  const allowedTags = ['br', 'p', 'strong', 'em', 'u'];
+  
+  // Create regex pattern for allowed tags (both opening and closing)
+  const allowedPattern = allowedTags.map(tag => `<\\/?${tag}(?:\\s[^>]*)?>|<${tag}\\s*\\/?>`).join('|');
+  const allowedTagsRegex = new RegExp(allowedPattern, 'gi');
+  
+  // First, collect all allowed tags
+  const allowedMatches = html.match(allowedTagsRegex) || [];
+  
+  // Remove all HTML tags
+  let sanitized = html.replace(/<[^>]*>/g, '');
+  
+  // Then add back only the allowed tags at their original positions
+  let matchIndex = 0;
+  sanitized = html.replace(/<[^>]*>/g, (match) => {
+    for (let allowedTag of allowedTags) {
+      const openTag = new RegExp(`<${allowedTag}(?:\\s[^>]*)?>`, 'i');
+      const closeTag = new RegExp(`<\\/${allowedTag}>`, 'i');
+      const selfCloseTag = new RegExp(`<${allowedTag}\\s*\\/>`, 'i');
+      
+      if (openTag.test(match) || closeTag.test(match) || selfCloseTag.test(match)) {
+        return match;
+      }
+    }
+    return ''; // Remove non-whitelisted tags
+  });
+  
+  return sanitized;
+};
+
+// Helper function to convert newlines to <br> tags and sanitize HTML
+const processHTMLContent = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  
+  // First convert newlines to <br> tags
+  let processedText = text.replace(/\n/g, '<br>');
+  
+  // Then sanitize HTML content
+  processedText = sanitizeHTML(processedText);
+  
+  return processedText;
+};
+
+// Helper function to process body array for HTML content
+const processBodyHTMLContent = (body, language) => {
+  if (!body || !Array.isArray(body)) return body;
+  
+  return body.map(item => {
+    const processedItem = { ...item };
+    
+    // Process text field for HTML content
+    if (processedItem.text && typeof processedItem.text === 'object') {
+      // Handle multilingual text object
+      Object.keys(processedItem.text).forEach(lang => {
+        if (processedItem.text[lang]) {
+          processedItem.text[lang] = processHTMLContent(processedItem.text[lang]);
+        }
+      });
+    } else if (typeof processedItem.text === 'string') {
+      // Handle direct string text
+      processedItem.text = processHTMLContent(processedItem.text);
+    }
+    
+    return processedItem;
+  });
+};
+
 const POPUlATE_IMAGES = [
   {
     path: `images.id`,
@@ -202,6 +274,11 @@ const Controller = {
     );
     // After retrieving contents
     contents = contents.map((content) => {
+      // Process HTML content for about_profile type
+      if (content.type === models.Content.CONTENT_TYPE().about_profile && content.body) {
+        content.body = processBodyHTMLContent(content.body, default_lang(req.headers));
+      }
+      
       // Sort the body array in reverse chronological order
       if (content.body && content.body.length > 0) {
         content.body.sort((a, b) => {
@@ -390,6 +467,11 @@ const Controller = {
       jam_kerja,
     } = req.body;
 
+    // Process HTML content for about_profile type before saving
+    if (type === 'about_profile' && body && Array.isArray(body)) {
+      body = processBodyHTMLContent(body, default_lang(req.headers));
+    }
+
     const slug = await generateSlugV3(title["id"], models.Content, `title`);
 
     const filter_existing_data = {
@@ -527,6 +609,11 @@ const Controller = {
       bottom_description2,
       jam_kerja,
     } = req.body;
+
+    // Process HTML content for about_profile type before updating
+    if (type === 'about_profile' && body && Array.isArray(body)) {
+      body = processBodyHTMLContent(body, default_lang(req.headers));
+    }
 
     let additional_filter = {
       _id: {
@@ -750,6 +837,11 @@ const Controller = {
     }
 
     content = JSON.parse(JSON.stringify(content));
+
+    // Process HTML content for about_profile type
+    if (content.type === models.Content.CONTENT_TYPE().about_profile && content.body) {
+      content.body = processBodyHTMLContent(content.body, default_lang(req.headers));
+    }
 
     if (content.body && Array.isArray(content.body)) {
       content.body = sortByOrder(content.body);
