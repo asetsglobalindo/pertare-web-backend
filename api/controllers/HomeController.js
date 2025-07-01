@@ -260,9 +260,32 @@ const Home = {
       home.section4a.content = sortByOrder(home.section4a.content);
     }
 
-    // Sort section5 content if it exists
-    if (home && home.section5 && home.section5.content) {
-      home.section5.content = sortByOrder(home.section5.content);
+    // Get latest news for section5 berita terkini
+    if (home && home.section5) {
+      const newsFilter = {
+        deleted_time: { $exists: false },
+        type: models.Content.CONTENT_TYPE().news,
+        active_status: true,
+      };
+      
+      if (req?.me?.organization_id || req.headers?.organizationid) {
+        newsFilter.organization_id = req?.me?.organization_id ?? req.headers?.organizationid;
+      }
+
+      const POPUlATE_CONTENT = [
+        { path: `category_id`, select: "name slug" },
+        { path: `thumbnail_images.${language}`, select: ATTRIBUTE_IMAGE },
+      ];
+
+      // Get latest 3 news items sorted by created_at
+      const latestNews = await models.Content.find(newsFilter)
+        .populate(POPUlATE_CONTENT)
+        .sort({ created_at: -1 })
+        .limit(3)
+        .select(ATTRIBUTE_CONTENT);
+
+      // Replace section5.content with latest news
+      home.section5.content = JSON.parse(JSON.stringify(latestNews));
     }
 
     // Sort diagram data by year in section4 if it exists
