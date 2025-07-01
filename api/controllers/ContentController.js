@@ -184,6 +184,16 @@ const POPULATE = [
     match: { deleted_time: { $exists: false } },
   },
   {
+    path: `sustainability_commitment_ceo_image.id`,
+    select: `images.url title description button_name button_route`,
+    match: { deleted_time: { $exists: false } },
+  },
+  {
+    path: `sustainability_commitment_ceo_image.en`,
+    select: `images.url title description button_name button_route`,
+    match: { deleted_time: { $exists: false } },
+  },
+  {
     path: `related`,
     select: "slug title small_text thumbnail_images images type",
     match: { deleted_time: { $exists: false } },
@@ -277,6 +287,13 @@ const Controller = {
       // Process HTML content for about_profile type
       if (content.type === models.Content.CONTENT_TYPE().about_profile && content.body) {
         content.body = processBodyHTMLContent(content.body, default_lang(req.headers));
+      }
+      
+      // Ensure sustainability commitment fields are included for CSR content types
+      if (content.type === models.Content.CONTENT_TYPE().csr || 
+          content.type === models.Content.CONTENT_TYPE().csr_list || 
+          content.type === models.Content.CONTENT_TYPE().csr_content) {
+        // Fields will be automatically included as they are part of the schema
       }
       
       // Sort the body array in reverse chronological order
@@ -465,6 +482,12 @@ const Controller = {
       bottom_text2,
       bottom_description2,
       jam_kerja,
+      // Sustainability commitment fields
+      sustainability_commitment_title,
+      sustainability_commitment_ceo_name,
+      sustainability_commitment_ceo_position,
+      sustainability_commitment_ceo_image = [],
+      sustainability_commitment_ceo_quote,
     } = req.body;
 
     // Process HTML content for about_profile type before saving
@@ -553,6 +576,12 @@ const Controller = {
         bottom_text2,
         bottom_description2,
         jam_kerja,
+        // Sustainability commitment fields
+        sustainability_commitment_title,
+        sustainability_commitment_ceo_name,
+        sustainability_commitment_ceo_position,
+        sustainability_commitment_ceo_image,
+        sustainability_commitment_ceo_quote,
       };
       await models.Content(new_data).save(options);
 
@@ -608,6 +637,12 @@ const Controller = {
       bottom_text2,
       bottom_description2,
       jam_kerja,
+      // Sustainability commitment fields
+      sustainability_commitment_title,
+      sustainability_commitment_ceo_name,
+      sustainability_commitment_ceo_position,
+      sustainability_commitment_ceo_image = [],
+      sustainability_commitment_ceo_quote,
     } = req.body;
 
     // Process HTML content for about_profile type before updating
@@ -727,6 +762,12 @@ const Controller = {
       if (bottom_description2)
         content.bottom_description2 = bottom_description2;
       if (jam_kerja) content.jam_kerja = jam_kerja;
+      // Update sustainability commitment fields
+      if (sustainability_commitment_title) content.sustainability_commitment_title = sustainability_commitment_title;
+      if (sustainability_commitment_ceo_name) content.sustainability_commitment_ceo_name = sustainability_commitment_ceo_name;
+      if (sustainability_commitment_ceo_position) content.sustainability_commitment_ceo_position = sustainability_commitment_ceo_position;
+      if (sustainability_commitment_ceo_image && sustainability_commitment_ceo_image.length > 0) content.sustainability_commitment_ceo_image = sustainability_commitment_ceo_image;
+      if (sustainability_commitment_ceo_quote) content.sustainability_commitment_ceo_quote = sustainability_commitment_ceo_quote;
       content.updated_at = current_date;
       content.updated_by = req.me._id;
       await content.save(options);
@@ -816,6 +857,10 @@ const Controller = {
         path: `body.images.${language}`,
         select: `images.url title description button_name button_route`,
       },
+      {
+        path: `sustainability_commitment_ceo_image.${language}`,
+        select: `images.url title description button_name button_route`,
+      },
     ];
 
     let content = await models.Content.findOne({
@@ -841,6 +886,13 @@ const Controller = {
     // Process HTML content for about_profile type
     if (content.type === models.Content.CONTENT_TYPE().about_profile && content.body) {
       content.body = processBodyHTMLContent(content.body, default_lang(req.headers));
+    }
+    
+    // Ensure sustainability commitment fields are included for CSR content types
+    if (content.type === models.Content.CONTENT_TYPE().csr || 
+        content.type === models.Content.CONTENT_TYPE().csr_list || 
+        content.type === models.Content.CONTENT_TYPE().csr_content) {
+      // Fields will be automatically included as they are part of the schema
     }
 
     if (content.body && Array.isArray(content.body)) {

@@ -167,6 +167,13 @@ const contentSchema = new mongoose.Schema({
     type: Date,
   },
 
+  // Sustainability commitment fields for CSR content
+  sustainability_commitment_title: LanguageListType("string"),
+  sustainability_commitment_ceo_name: LanguageListType("string"),
+  sustainability_commitment_ceo_position: LanguageListType("string"),
+  sustainability_commitment_ceo_image: [LanguageListType("image")],
+  sustainability_commitment_ceo_quote: LanguageListType("string"),
+
   organization_id: {
     type: String,
   },
