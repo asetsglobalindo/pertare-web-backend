@@ -57,6 +57,47 @@ const sortByYear = (items) => {
   });
 };
 
+// Helper function to convert string values to numbers while preserving format
+const convertToFlexibleNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  
+  // If already a number, return as is
+  if (typeof value === 'number') return value;
+  
+  // Convert string to number
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed === '') return null;
+    
+    const num = Number(trimmed);
+    if (isNaN(num)) return null;
+    
+    // Return the number (preserves decimal/integer format)
+    return num;
+  }
+  
+  return null;
+};
+
+// Helper function to process diagram data with flexible number conversion
+const processFlexibleDiagramData = (diagramData) => {
+  if (!diagramData || !Array.isArray(diagramData)) return diagramData;
+  
+  return diagramData.map(item => {
+    const processedItem = { ...item };
+    
+    // Convert numeric fields to flexible numbers
+    if (processedItem.kolom1 !== undefined) {
+      processedItem.kolom1 = convertToFlexibleNumber(processedItem.kolom1);
+    }
+    if (processedItem.kolom2 !== undefined) {
+      processedItem.kolom2 = convertToFlexibleNumber(processedItem.kolom2);
+    }
+    
+    return processedItem;
+  });
+};
+
 const Home = {
   health: async function (_, res) {
     res.status(200).json(`Healthy`);
@@ -213,8 +254,10 @@ const Home = {
         );
       }
 
-      // Get the appropriate diagram data and sort by year
-      const diagramData = sortByYear(section4[diagramType] || []);
+      // Get the appropriate diagram data, apply flexible number conversion, and sort by year
+      let diagramData = section4[diagramType] || [];
+      diagramData = processFlexibleDiagramData(diagramData);
+      diagramData = sortByYear(diagramData);
 
       return response.ok(
         diagramData,
@@ -288,13 +331,15 @@ const Home = {
       home.section5.content = JSON.parse(JSON.stringify(latestNews));
     }
 
-    // Sort diagram data by year in section4 if it exists
+    // Process diagram data with flexible number conversion and sort by year in section4
     if (home && home.section4 && Array.isArray(home.section4)) {
       home.section4.forEach((section) => {
         if (section.diagram1 && Array.isArray(section.diagram1)) {
+          section.diagram1 = processFlexibleDiagramData(section.diagram1);
           section.diagram1 = sortByYear(section.diagram1);
         }
         if (section.diagram2 && Array.isArray(section.diagram2)) {
+          section.diagram2 = processFlexibleDiagramData(section.diagram2);
           section.diagram2 = sortByYear(section.diagram2);
         }
       });
