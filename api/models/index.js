@@ -15,12 +15,13 @@ const Location = require("./location");
 const City = require("./city");
 const Form = require("./form");
 const Footer = require("./footer");
+const CSRSocial = require("./csrsocial");
 
 const models = {
     Role, Organization, User, RolePage, PendingMail,
     Feedback, Header, Access,
     Content, Email, Image, Category,
-    Home, Location, City, Form, Footer
+    Home, Location, City, Form, Footer, CSRSocial
 };
 
 module.exports = models;

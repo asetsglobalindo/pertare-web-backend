@@ -43,4 +43,7 @@ module.exports = function (app) {
 
     let Visitor = require('../api/routes/Visitor');
     app.use('/visitor', Visitor);
+
+    let CSRSocial = require('../api/routes/CSRSocial');
+    app.use('/csr-social', CSRSocial);
 }
