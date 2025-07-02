@@ -491,8 +491,15 @@ const Controller = {
 
         if (title) socialProgram.title = title;
         if (description) socialProgram.description = description;
-        if (images.length >= 0) socialProgram.images = images;
-        if (thumbnail_images.length >= 0) socialProgram.thumbnail_images = thumbnail_images;
+        
+        // Only update images if they are explicitly provided and not empty from status-only updates
+        if (images !== undefined && Array.isArray(images)) {
+          socialProgram.images = images;
+        }
+        if (thumbnail_images !== undefined && Array.isArray(thumbnail_images)) {
+          socialProgram.thumbnail_images = thumbnail_images;
+        }
+        
         if (active_status !== undefined) socialProgram.active_status = active_status;
         if (order !== undefined) socialProgram.order = parseInt(order) || 0;
         if (meta_title) socialProgram.meta_title = meta_title;
@@ -583,6 +590,57 @@ const Controller = {
       }
     } catch (error) {
       console.error("Error in delete:", error);
+      return response.error(400, error.message, res, error);
+    }
+  },
+
+  // Toggle status only (untuk mencegah gambar hilang)
+  toggleStatus: async function (req, res) {
+    try {
+      const current_date = moment().tz("Asia/Jakarta").format();
+      const { program_id } = req.params;
+      const { active_status } = req.body;
+
+      if (active_status === undefined) {
+        return response.error(400, "active_status is required", res);
+      }
+
+      const filter = {
+        _id: program_id,
+        organization_id: req.me?.organization_id || 'default_org',
+        deleted_time: {
+          $exists: false,
+        },
+      };
+
+      const socialProgram = await models.CSRSocial.findOne(filter);
+      if (!socialProgram)
+        return response.error(
+          400,
+          i18n(
+            `NotFound {{name}}`,
+            { name: CONTROLLER[default_lang(req.headers)] },
+            default_lang(req.headers),
+            "general"
+          ),
+          res
+        );
+
+      // Update only status, do not touch images
+      socialProgram.active_status = active_status;
+      socialProgram.updated_at = current_date;
+      socialProgram.updated_by = req.me?._id || 'default_user';
+      
+      await socialProgram.save();
+      
+      return response.ok(
+        socialProgram,
+        res,
+        i18n(`Success`, {}, req.headers["accept-language"], "general")
+      );
+      
+    } catch (error) {
+      console.error("Error in toggleStatus:", error);
       return response.error(400, error.message, res, error);
     }
   },

@@ -14,6 +14,9 @@ router.post("/admin", middleware.authAdmin, Controller.add);
 router.put("/admin/:program_id", middleware.authAdmin, Controller.update);
 router.delete("/admin/:program_id", middleware.authAdmin, Controller.delete);
 
+// Toggle status only (khusus untuk switch status)
+router.patch("/admin/:program_id/status", middleware.authAdmin, Controller.toggleStatus);
+
 // Debug route (remove in production)
 router.get("/debug", Controller.debug);
 
