@@ -19,7 +19,7 @@ const app = express();
 app.use(cors({ origin: "*" }));
 
 app.use("/static", express.static(BASE_STORAGE_DIR));
-app.use(express.static(path.join(__dirname, "../..")));
+// app.use(express.static(path.join(__dirname, "../..")));
 app.use(morgan("combined"));
 app.use(fileUpload());
 
