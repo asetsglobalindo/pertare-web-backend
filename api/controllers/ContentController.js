@@ -273,8 +273,17 @@ const Controller = {
       filter.organization_id =
         req?.me?.organization_id ?? req.headers?.organizationid;
 
+    // Special sorting for news - sort by latest date first
+    let sortConfig = { [sort_at]: +sort_by };
+    if (type === "news") {
+      // For news, sort by created_at descending (latest first) unless specifically overridden
+      if (sort_at === "order") {
+        sortConfig = { created_at: -1 };
+      }
+    }
+    
     const sort = {
-      sort: { [sort_at]: +sort_by },
+      sort: sortConfig,
       skip: (+page - 1) * +limit,
       limit: +limit,
     };
