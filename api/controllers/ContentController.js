@@ -25,72 +25,80 @@ const sortByOrder = (items) => {
 
 // Helper function to sanitize HTML content
 const sanitizeHTML = (html) => {
-  if (!html || typeof html !== 'string') return html;
-  
+  if (!html || typeof html !== "string") return html;
+
   // Whitelist of allowed HTML tags
-  const allowedTags = ['br', 'p', 'strong', 'em', 'u'];
-  
+  const allowedTags = ["br", "p", "strong", "em", "u"];
+
   // Create regex pattern for allowed tags (both opening and closing)
-  const allowedPattern = allowedTags.map(tag => `<\\/?${tag}(?:\\s[^>]*)?>|<${tag}\\s*\\/?>`).join('|');
-  const allowedTagsRegex = new RegExp(allowedPattern, 'gi');
-  
+  const allowedPattern = allowedTags
+    .map((tag) => `<\\/?${tag}(?:\\s[^>]*)?>|<${tag}\\s*\\/?>`)
+    .join("|");
+  const allowedTagsRegex = new RegExp(allowedPattern, "gi");
+
   // First, collect all allowed tags
   const allowedMatches = html.match(allowedTagsRegex) || [];
-  
+
   // Remove all HTML tags
-  let sanitized = html.replace(/<[^>]*>/g, '');
-  
+  let sanitized = html.replace(/<[^>]*>/g, "");
+
   // Then add back only the allowed tags at their original positions
   let matchIndex = 0;
   sanitized = html.replace(/<[^>]*>/g, (match) => {
     for (let allowedTag of allowedTags) {
-      const openTag = new RegExp(`<${allowedTag}(?:\\s[^>]*)?>`, 'i');
-      const closeTag = new RegExp(`<\\/${allowedTag}>`, 'i');
-      const selfCloseTag = new RegExp(`<${allowedTag}\\s*\\/>`, 'i');
-      
-      if (openTag.test(match) || closeTag.test(match) || selfCloseTag.test(match)) {
+      const openTag = new RegExp(`<${allowedTag}(?:\\s[^>]*)?>`, "i");
+      const closeTag = new RegExp(`<\\/${allowedTag}>`, "i");
+      const selfCloseTag = new RegExp(`<${allowedTag}\\s*\\/>`, "i");
+
+      if (
+        openTag.test(match) ||
+        closeTag.test(match) ||
+        selfCloseTag.test(match)
+      ) {
         return match;
       }
     }
-    return ''; // Remove non-whitelisted tags
+    return ""; // Remove non-whitelisted tags
   });
-  
+
   return sanitized;
 };
 
 // Helper function to convert newlines to <br> tags and sanitize HTML
 const processHTMLContent = (text) => {
-  if (!text || typeof text !== 'string') return text;
-  
+  if (!text || typeof text !== "string") return text;
+
   // First convert newlines to <br> tags
-  let processedText = text.replace(/\n/g, '<br>');
-  
+  let processedText = text.replace(/\n/g, "<br>");
+
   // Then sanitize HTML content
   processedText = sanitizeHTML(processedText);
-  
+
   return processedText;
 };
 
 // Helper function to process body array for HTML content
 const processBodyHTMLContent = (body, language) => {
   if (!body || !Array.isArray(body)) return body;
-  
-  return body.map(item => {
+
+  return body.map((item) => {
     const processedItem = { ...item };
-    
+
     // Process text field for HTML content
-    if (processedItem.text && typeof processedItem.text === 'object') {
+    if (processedItem.text && typeof processedItem.text === "object") {
       // Handle multilingual text object
-      Object.keys(processedItem.text).forEach(lang => {
+      Object.keys(processedItem.text).forEach((lang) => {
         if (processedItem.text[lang]) {
-          processedItem.text[lang] = processHTMLContent(processedItem.text[lang]);
+          processedItem.text[lang] = processHTMLContent(
+            processedItem.text[lang]
+          );
         }
       });
-    } else if (typeof processedItem.text === 'string') {
+    } else if (typeof processedItem.text === "string") {
       // Handle direct string text
       processedItem.text = processHTMLContent(processedItem.text);
     }
-    
+
     return processedItem;
   });
 };
@@ -281,7 +289,7 @@ const Controller = {
         sortConfig = { created_at: -1 };
       }
     }
-    
+
     const sort = {
       sort: sortConfig,
       skip: (+page - 1) * +limit,
@@ -294,17 +302,25 @@ const Controller = {
     // After retrieving contents
     contents = contents.map((content) => {
       // Process HTML content for about_profile type
-      if (content.type === models.Content.CONTENT_TYPE().about_profile && content.body) {
-        content.body = processBodyHTMLContent(content.body, default_lang(req.headers));
+      if (
+        content.type === models.Content.CONTENT_TYPE().about_profile &&
+        content.body
+      ) {
+        content.body = processBodyHTMLContent(
+          content.body,
+          default_lang(req.headers)
+        );
       }
-      
+
       // Ensure sustainability commitment fields are included for CSR content types
-      if (content.type === models.Content.CONTENT_TYPE().csr || 
-          content.type === models.Content.CONTENT_TYPE().csr_list || 
-          content.type === models.Content.CONTENT_TYPE().csr_content) {
+      if (
+        content.type === models.Content.CONTENT_TYPE().csr ||
+        content.type === models.Content.CONTENT_TYPE().csr_list ||
+        content.type === models.Content.CONTENT_TYPE().csr_content
+      ) {
         // Fields will be automatically included as they are part of the schema
       }
-      
+
       // Sort the body array in reverse chronological order
       if (content.body && content.body.length > 0) {
         content.body.sort((a, b) => {
@@ -500,7 +516,7 @@ const Controller = {
     } = req.body;
 
     // Process HTML content for about_profile type before saving
-    if (type === 'about_profile' && body && Array.isArray(body)) {
+    if (type === "about_profile" && body && Array.isArray(body)) {
       body = processBodyHTMLContent(body, default_lang(req.headers));
     }
 
@@ -655,7 +671,7 @@ const Controller = {
     } = req.body;
 
     // Process HTML content for about_profile type before updating
-    if (type === 'about_profile' && body && Array.isArray(body)) {
+    if (type === "about_profile" && body && Array.isArray(body)) {
       body = processBodyHTMLContent(body, default_lang(req.headers));
     }
 
@@ -772,12 +788,29 @@ const Controller = {
         content.bottom_description2 = bottom_description2;
       if (jam_kerja) content.jam_kerja = jam_kerja;
       // Update sustainability commitment fields
-      if (sustainability_commitment_title) content.sustainability_commitment_title = sustainability_commitment_title;
-      if (sustainability_commitment_ceo_name) content.sustainability_commitment_ceo_name = sustainability_commitment_ceo_name;
-      if (sustainability_commitment_ceo_position) content.sustainability_commitment_ceo_position = sustainability_commitment_ceo_position;
-      if (sustainability_commitment_ceo_image && sustainability_commitment_ceo_image.length > 0) content.sustainability_commitment_ceo_image = sustainability_commitment_ceo_image;
-      if (sustainability_commitment_ceo_quote) content.sustainability_commitment_ceo_quote = sustainability_commitment_ceo_quote;
-      content.updated_at = current_date;
+      if (sustainability_commitment_title)
+        content.sustainability_commitment_title =
+          sustainability_commitment_title;
+      if (sustainability_commitment_ceo_name)
+        content.sustainability_commitment_ceo_name =
+          sustainability_commitment_ceo_name;
+      if (sustainability_commitment_ceo_position)
+        content.sustainability_commitment_ceo_position =
+          sustainability_commitment_ceo_position;
+      if (
+        sustainability_commitment_ceo_image &&
+        sustainability_commitment_ceo_image.length > 0
+      )
+        content.sustainability_commitment_ceo_image =
+          sustainability_commitment_ceo_image;
+      if (sustainability_commitment_ceo_quote)
+        content.sustainability_commitment_ceo_quote =
+          sustainability_commitment_ceo_quote;
+
+      content.updated_at = req.body.updated_at
+        ? new Date(req.body.updated_at)
+        : current_date;
+
       content.updated_by = req.me._id;
       await content.save(options);
 
@@ -893,14 +926,22 @@ const Controller = {
     content = JSON.parse(JSON.stringify(content));
 
     // Process HTML content for about_profile type
-    if (content.type === models.Content.CONTENT_TYPE().about_profile && content.body) {
-      content.body = processBodyHTMLContent(content.body, default_lang(req.headers));
+    if (
+      content.type === models.Content.CONTENT_TYPE().about_profile &&
+      content.body
+    ) {
+      content.body = processBodyHTMLContent(
+        content.body,
+        default_lang(req.headers)
+      );
     }
-    
+
     // Ensure sustainability commitment fields are included for CSR content types
-    if (content.type === models.Content.CONTENT_TYPE().csr || 
-        content.type === models.Content.CONTENT_TYPE().csr_list || 
-        content.type === models.Content.CONTENT_TYPE().csr_content) {
+    if (
+      content.type === models.Content.CONTENT_TYPE().csr ||
+      content.type === models.Content.CONTENT_TYPE().csr_list ||
+      content.type === models.Content.CONTENT_TYPE().csr_content
+    ) {
       // Fields will be automatically included as they are part of the schema
     }
 
