@@ -1,6 +1,6 @@
 // middlewares/apiKeyAuth.js
 const apiKeyAuth = (req, res, next) => {
-  const apiKey = req.headers['x-api-key'] || req.query.api_key;
+  const apiKey = req.headers['x-api-key'];
   const validApiKey = process.env.API_KEY || 'your-secret-api-key-here';
   
   if (!apiKey) {
