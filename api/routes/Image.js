@@ -1,6 +1,6 @@
 const express = require('express');
 const middleware = require('../helper/middleware');
-const apiKeyAuth = require('../middlewares/apiKeyAuth'); // Import middleware
+const apiKeyAuth = require('../middlewares/apiKeyAuth'); // Import middleware api key
 const router = express.Router(),
   Controller = require('../controllers/ImageController');
 
