@@ -71,11 +71,7 @@ var server = http.createServer(app);
  * Listen on provided port, on all network interfaces.
  */
 
-// server.listen(port);
-server.listen(port, "127.0.0.1", () => {
-  console.log(`Express running at http://127.0.0.1:${port}`);
-});
-
+server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 
